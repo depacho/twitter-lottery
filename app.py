@@ -57,8 +57,6 @@ if not resp.meta or "next_token" not in resp.meta:
 break
 pagination_token = resp.meta["next_token"]
 return ids
-​
-​
 def get_followers(user_id: str) -> set:
 """指定ユーザーのフォロワーIDを全取得"""
 ids = set()
@@ -73,8 +71,6 @@ if not resp.meta or "next_token" not in resp.meta:
 break
 pagination_token = resp.meta["next_token"]
 return ids
-​
-​
 def get_user_details(user_ids: list) -> list:
 """ユーザーIDからプロフィール情報を取得（100件ずつ）"""
 all_users = []
@@ -86,18 +82,13 @@ ids=chunk, user_fields=["username", "name", "profile_image_url"]
 if resp.data:
 all_users.extend(resp.data)
 return all_users
-​
-​
 # ============================================================
 # UI
 # ============================================================
 st.set_page_config(page_title="X 抽選ツール", page_icon="🎰", layout="centered")
-​
 st.title("🎰 X（Twitter）抽選ツール")
 st.caption("リポスト × フォロー × 特定ワードのリプライ — 全条件を満たした方から抽選します")
-​
 st.divider()
-​
 # --- 入力フォーム ---
 tweet_url = st.text_input(
 "📌 募集ツイートのURL",
@@ -107,12 +98,9 @@ keyword = st.text_input(
 "🔑 リプライに含むべきキーワード",
 placeholder="例: 参加します",
 )
-​
 st.divider()
-​
 # --- 抽選実行 ---
 if st.button("🎲 抽選を実行する", type="primary", use_container_width=True):
-​
 # バリデーション
 tweet_id = extract_tweet_id(tweet_url)
 if not tweet_id:
@@ -121,7 +109,6 @@ st.stop()
 if not keyword.strip():
 st.error("❌ キーワードを入力してください")
 st.stop()
-​
 # 1) ツイート投稿者を取得
 with st.spinner("ツイート情報を取得中..."):
 author_id = get_tweet_author(tweet_id)
@@ -131,27 +118,21 @@ st.stop()
 author_info = client.get_user(id=author_id)
 author_username = author_info.data.username if author_info.data else "unknown"
 st.info(f"📣 ツイート投稿者: **@{author_username}**")
-​
 # 2) リポストしたユーザーを取得
 with st.spinner("リポストしたユーザーを取得中..."):
 retweeters = get_retweeters(tweet_id)
 st.info(f"🔁 リポスト: **{len(retweeters)}** 人")
-​
 # 3) キーワード付きリプライしたユーザーを取得
 with st.spinner(f'「{keyword}」を含むリプライを取得中...'):
 repliers = get_repliers_with_keyword(tweet_id, keyword.strip())
 st.info(f'💬 「{keyword}」を含むリプライ: **{len(repliers)}** 人')
-​
 # 4) ツイート投稿者のフォロワーを取得
 with st.spinner(f"@{author_username} のフォロワーを取得中...（フォロワー数により時間がかかる場合があります）"):
 followers = get_followers(author_id)
 st.info(f"👥 フォロワー: **{len(followers)}** 人")
-​
 # 5) 全条件の積集合
 eligible = retweeters & repliers & followers
-​
 st.divider()
-​
 if len(eligible) == 0:
 st.warning("⚠️ 全条件を満たすユーザーが見つかりませんでした")
 st.markdown("**内訳を確認してください:**")
@@ -159,22 +140,17 @@ st.markdown(f"- リポスト ∩ リプライ（キーワード含む）: **{len
 st.markdown(f"- リポスト ∩ フォロー: **{len(retweeters & followers)}** 人")
 st.markdown(f"- リプライ ∩ フォロー: **{len(repliers & followers)}** 人")
 st.stop()
-​
 st.success(f"✅ **全条件クリア: {len(eligible)} 人**")
-​
 # 6) ランダム抽選
 seed = int(datetime.now().timestamp() * 1000)
 random.seed(seed)
 winner_ids = random.sample(list(eligible), min(NUM_WINNERS, len(eligible)))
-​
 # 7) 当選者の詳細情報を取得
 with st.spinner("当選者情報を取得中..."):
 winners = get_user_details(winner_ids)
-​
 # 8) 結果表示
 st.divider()
 st.header("🎉 当選者")
-​
 for i, user in enumerate(winners, 1):
 col1, col2 = st.columns([1, 10])
 with col1:
@@ -183,7 +159,6 @@ with col2:
 st.markdown(f"**@{user.username}**（{user.name}）")
 st.markdown(f"[プロフィールを見る](https://x.com/{user.username})")
 st.divider()
-​
 # 9) メタ情報
 st.divider()
 st.caption("📋 抽選メタ情報（公正性の証明用）")
