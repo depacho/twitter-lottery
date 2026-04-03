@@ -4,16 +4,13 @@ import random
 import re
 import time
 from datetime import datetime
-​
 # ============================================================
 # 設定（Streamlit Cloud の Secrets から読み込み）
 # ============================================================
 BEARER_TOKEN = st.secrets["BEARER_TOKEN"]
 YOUR_USER_ID = st.secrets["YOUR_USER_ID"]
 NUM_WINNERS = 10
-​
 client = tweepy.Client(bearer_token=BEARER_TOKEN, wait_on_rate_limit=True)
-​
 # ============================================================
 # ユーティリティ関数
 # ============================================================
@@ -21,16 +18,12 @@ def extract_tweet_id(url: str) -> str | None:
 """ツイートURLからIDを抽出"""
 match = re.search(r"/status/(\d+)", url)
 return match.group(1) if match else None
-​
-​
 def get_tweet_author(tweet_id: str) -> str | None:
 """ツイートの投稿者ユーザーIDを取得"""
 resp = client.get_tweet(tweet_id, tweet_fields=["author_id"])
 if resp.data:
 return resp.data.author_id
 return None
-​
-​
 def get_retweeters(tweet_id: str) -> set:
 """リポスト（リツイート）したユーザーIDを全取得"""
 ids = set()
