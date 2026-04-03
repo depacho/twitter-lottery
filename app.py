@@ -37,22 +37,39 @@ def get_retweeters(tweet_id: str) -> set:
     return ids
 
 def get_repliers_with_keyword(tweet_id: str, keyword: str) -> set:
-    """キーワードリプライしたユーザーを取得（検索APIで一括取得）"""
+    """リプライを全取得し、特殊文字や改行を無視してキーワード判定を行う"""
     ids = set()
     pagination_token = None
-    query = f'conversation_id:{tweet_id} is:reply "{keyword}"'
+    
+    # 判定用の正規表現：キーワードの各文字の間に「0個以上の任意の文字（空白や改行含む）」を許容する
+    # 例: 「クリスタ」なら「ク.*リ.*ス.*タ」のようなパターンを作る
+    pattern = ".*".join(map(re.escape, keyword))
+    
     try:
         while True:
+            # 検索クエリからはキーワードを外し、リプライを全件持ってくる（これが確実）
+            query = f'conversation_id:{tweet_id} is:reply'
             resp = client.search_recent_tweets(
-                query=query, max_results=100, tweet_fields=["author_id"], pagination_token=pagination_token
+                query=query, 
+                max_results=100, 
+                tweet_fields=["author_id", "text"], # text（本文）を取得して判定に使う
+                pagination_token=pagination_token
             )
+            
             if resp.data:
-                ids.update(t.author_id for t in resp.data)
+                for t in resp.data:
+                    # 本文から改行や特殊な空白を除去してから判定、
+                    # または正規表現で「あいまいに」マッチさせる
+                    if re.search(pattern, t.text):
+                        ids.update([t.author_id])
+                        
             if not resp.meta or "next_token" not in resp.meta:
                 break
             pagination_token = resp.meta["next_token"]
+            
     except Exception as e:
         st.error(f"リプライ取得エラー: {e}")
+        
     return ids
 
 def get_user_details(user_ids: list) -> list:
