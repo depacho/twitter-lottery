@@ -38,8 +38,6 @@ if not resp.meta or "next_token" not in resp.meta:
 break
 pagination_token = resp.meta["next_token"]
 return ids
-​
-​
 def get_repliers_with_keyword(tweet_id: str, keyword: str) -> set:
 """特定キーワードを含むリプライをしたユーザーIDを全取得"""
 ids = set()
